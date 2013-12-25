@@ -46,12 +46,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\dev\projects\hl2sdk-dota\public\steam;C:\dev\projects\mmsource-1.9\core;C:\dev\projects\mmsource-1.9\core\sourcehook;C:\dev\projects\hl2sdk-dota\common\protobuf-2.4.1\src;C:\dev\projects\hl2sdk-dota\public;C:\dev\projects\hl2sdk-dota\public\engine;C:\dev\projects\hl2sdk-dota\public\game\server;C:\dev\projects\hl2sdk-dota\public\tier0;C:\dev\projects\hl2sdk-dota\public\tier1;C:\dev\projects\hl2sdk-dota\public\vstdlib;
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MMCENTRAL)\core;$(MMCENTRAL)\core\sourcehook;$(HL2SDKDOTA)\common\protobuf-2.4.1\src;$(HL2SDKDOTA)\public;$(HL2SDKDOTA)\public\engine;$(HL2SDKDOTA)\public\game\server;$(HL2SDKDOTA)\public\tier0;$(HL2SDKDOTA)\public\tier1;$(HL2SDKDOTA)\public\vstdlib</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>(AdditionalIncludeDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(HL2SDKDOTA)\lib\public</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -61,7 +61,7 @@
       <FunctionLevelLinking>
       </FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>C:\dev\projects\hl2sdk-dota\public\steam;C:\dev\projects\mmsource-1.9\core;C:\dev\projects\mmsource-1.9\core\sourcehook;C:\dev\projects\hl2sdk-dota\common\protobuf-2.4.1\src;C:\dev\projects\hl2sdk-dota\public;C:\dev\projects\hl2sdk-dota\public\engine;C:\dev\projects\hl2sdk-dota\public\game\server;C:\dev\projects\hl2sdk-dota\public\tier0;C:\dev\projects\hl2sdk-dota\public\tier1;C:\dev\projects\hl2sdk-dota\public\vstdlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MMCENTRAL)\core;$(MMCENTRAL)\core\sourcehook;$(HL2SDKDOTA)\common\protobuf-2.4.1\src;$(HL2SDKDOTA)\public;$(HL2SDKDOTA)\public\engine;$(HL2SDKDOTA)\public\game\server;$(HL2SDKDOTA)\public\tier0;$(HL2SDKDOTA)\public\tier1;$(HL2SDKDOTA)\public\vstdlib</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>VERSION_SAFE_STEAM_API_INTERFACES;WIN32;NDEBUG;_WINDOWS;_USRDLL;LuaEx_EXPORTS;COMPILER_MSVC;COMPILER_MSVC32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -77,6 +77,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalLibraryDirectories>$(HL2SDKDOTA)\lib\public</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
