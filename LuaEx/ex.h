@@ -2,13 +2,10 @@
 #include <vscript/ivscript.h>
 #include "dotaptrs.h"
 
-class Ex
+class ScriptExtension
 {
 public:
-	Ex();
-	DetourHandler IsDeniableCalled();
-	void IsDeniable(HSCRIPT npc);
-	void SetUnitControllableByPlayer(HSCRIPT npc, int playerId, bool something); 
+	ScriptExtension();
 
 public:
 	inline HSCRIPT GetHScript() const
@@ -23,4 +20,16 @@ public:
 
 private:
 	HSCRIPT m_hScope;
+};
+
+class ExUnit : public ScriptExtension
+{
+public:
+	void SetControllableByPlayer(HSCRIPT npc, int playerId, bool something);
+};
+
+class ExAbility : public ScriptExtension
+{
+public:
+	void EndCooldown(HSCRIPT ability);
 };

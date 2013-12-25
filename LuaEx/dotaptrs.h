@@ -1,8 +1,9 @@
 #pragma once
-extern void* SetControllablePtr;
+extern void *SetControllablePtr;
+extern void *EndCooldownPtr;
 extern IScriptVM *luavm;
 
-extern enum DetourResult
+enum DetourResult
 {
 	DET_IGNORE,
 	DET_SUPERCEDE
@@ -22,20 +23,24 @@ public:
 	DetourReturn value;
 };
 
-#define NONSTANDARD_CALL_REG2_STACK1_RET(func, retreg, reg1, arg1, reg2, arg2, stack1) \
+#define CALL_STACK1_VOID(func, stack1) \
+	__asm push stack1 \
+	__asm call func
+
+#define CALL_REG2_STACK1_RET(func, retreg, reg1, arg1, reg2, arg2, stack1) \
 	__asm mov reg1, arg1 \
 	__asm mov reg2, arg2 \
 	__asm push stack1 \
 	__asm call func \
 	__asm mov retn, retreg
 
-#define NONSTANDARD_CALL_REG2_STACK1_VOID(func, reg1, arg1, reg2, arg2, stack1) \
+#define CALL_REG2_STACK1_VOID(func, reg1, arg1, reg2, arg2, stack1) \
 	__asm mov reg1, arg1 \
 	__asm mov reg2, arg2 \
 	__asm push stack1 \
 	__asm call func 
 
-#define NONSTANDARD_CALL_REG1_RET(func, retreg, reg1, arg1) \
+#define CALL_REG1_RET(func, retreg, reg1, arg1) \
 	__asm mov reg1, arg1 \
 	__asm call func \
 	__asm mov retn, retreg

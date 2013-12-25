@@ -35,12 +35,16 @@
 
 static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
-static Ex ex;
+static ExUnit exUnit;
+static ExAbility exAbility;
 
 IScriptVM *luavm;
 
 const char *setControllableSignature = "\x55\x8B\xEC\x51\x56\x89\x86\x64\x0B\x00\x00\xE8\x2A\x2A\x2A\x2A\x80\x7D\x08\x00\x75\x2A\x83\xBE\x64\x0B\x00\x00\xFF\x74\x2A\x8B\x8E\x20\x01";
 void *SetControllablePtr;
+
+const char *endCooldownSignature = "\x55\x8B\xEC\x0F\x57\xC0\x53\x8B\x5D\x08\xF3\x0F\x10\x8B\xE8\x03\x00\x00"; 
+void *EndCooldownPtr;
 
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
@@ -55,6 +59,7 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 	InitHooks();
 
 	SetControllablePtr = FindAddress(setControllableSignature, 35);
+	EndCooldownPtr = FindAddress(endCooldownSignature, 18);
 
 	return true;
 }
@@ -86,8 +91,10 @@ IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 
 	luavm = META_RESULT_ORIG_RET(IScriptVM *);
 
-	HSCRIPT scope = luavm->RegisterInstance(&ex, "Ex");
-	ex.SetHScript(scope);
+	HSCRIPT scope = luavm->RegisterInstance(&exUnit, "ExUnit");
+	exUnit.SetHScript(scope);
+	scope = luavm->RegisterInstance(&exAbility, "ExAbility");
+	exAbility.SetHScript(scope);
 
 	RETURN_META_VALUE(MRES_IGNORED, NULL);
 }
@@ -105,7 +112,9 @@ void LuaEx::Hook_DestroyVM(IScriptVM *pVM)
 
 void LuaEx::UnregisterInstance()
 {
-	HSCRIPT scope = ex.GetHScript();
+	HSCRIPT scope = exUnit.GetHScript();
+	luavm->RemoveInstance(scope);
+	scope = exAbility.GetHScript();
 	luavm->RemoveInstance(scope);
 }
 

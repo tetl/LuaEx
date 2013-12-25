@@ -1,18 +1,29 @@
 #include "ex.h"
 
-BEGIN_SCRIPTDESC_ROOT(Ex, "More Scripting More Fun")
-	DEFINE_SCRIPTFUNC(SetUnitControllableByPlayer, "Allows Unit to be controlled by PlayerId")
+BEGIN_SCRIPTDESC_ROOT(ExUnit, "Unit-based script extensions")
+	DEFINE_SCRIPTFUNC(SetControllableByPlayer, "Allows Unit to be controlled by PlayerId")
 END_SCRIPTDESC();
 
-Ex::Ex() : m_hScope(INVALID_HSCRIPT)
+BEGIN_SCRIPTDESC_ROOT(ExAbility, "Ability-based script extensions")
+	DEFINE_SCRIPTFUNC(EndCooldown, "Ends the cooldown of Ability")
+END_SCRIPTDESC();
+
+ScriptExtension::ScriptExtension() : m_hScope(INVALID_HSCRIPT)
 {
 }
 
-void Ex::SetUnitControllableByPlayer(HSCRIPT npc, int playerId, bool something)
+void ExUnit::SetControllableByPlayer(HSCRIPT npc, int playerId, bool something)
 {
 	void *npcPtr = luavm->GetInstanceValue(npc);
+	
+	CALL_REG2_STACK1_VOID(SetControllablePtr, esi, npcPtr, eax, playerId, 0)
+}
 
-	NONSTANDARD_CALL_REG2_STACK1_VOID(SetControllablePtr, esi, npcPtr, eax, playerId, 0)
+void ExAbility::EndCooldown(HSCRIPT ability)
+{
+	void *abilityPtr = luavm->GetInstanceValue(ability);
+
+	CALL_STACK1_VOID(EndCooldownPtr, abilityPtr) //can be bound to a C function but who cares man
 }
 
 /*void Ex::IsDeniable(HSCRIPT npc)
