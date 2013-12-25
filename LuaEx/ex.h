@@ -33,3 +33,9 @@ class ExAbility : public ScriptExtension
 public:
 	void EndCooldown(HSCRIPT ability);
 };
+
+class Ex : public ScriptExtension
+{
+public:
+	void ApplyDamage(HSCRIPT attackingUnit, HSCRIPT damagedUnit, HSCRIPT ability, float damage, int typeField);
+};

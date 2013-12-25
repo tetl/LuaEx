@@ -1,6 +1,7 @@
 #pragma once
 extern void *SetControllablePtr;
 extern void *EndCooldownPtr;
+extern void *ApplyDamagePtr;
 extern IScriptVM *luavm;
 
 enum DetourResult
@@ -22,6 +23,15 @@ public:
 	DetourResult result;
 	DetourReturn value;
 };
+
+#define CALL_REG1_STACK5_VOID(func, reg1, arg1, stack1, stack2, stack3, stack4, stack5) \
+	__asm mov reg1, arg1 \
+	__asm push stack1 \
+	__asm push stack2 \
+	__asm push stack3 \
+	__asm push stack4 \
+	__asm push stack5 \
+	__asm call func \
 
 #define CALL_STACK1_VOID(func, stack1) \
 	__asm push stack1 \

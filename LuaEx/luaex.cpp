@@ -37,6 +37,7 @@ static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
 static ExUnit exUnit;
 static ExAbility exAbility;
+static Ex ex;
 
 IScriptVM *luavm;
 
@@ -45,6 +46,9 @@ void *SetControllablePtr;
 
 const char *endCooldownSignature = "\x55\x8B\xEC\x0F\x57\xC0\x53\x8B\x5D\x08\xF3\x0F\x10\x8B\xE8\x03\x00\x00"; 
 void *EndCooldownPtr;
+
+const char *applyDamageSignature = "\x55\x8B\xEC\x51\x53\x8B\x5D\x08\x56\x85\xFF\x0F\x84\x2A\x2A\x2A\x2A\x83\xBF\x2A\x2A\x2A\x2A\x2A\x0F\x8E\x2A\x2A\x2A\x2A\xB8\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x85\xDB\x74\x2A\x8B\x03\x8B\x50\x08\x8B\xCB\xFF\xD2\x8B\x00\x89\x46\x04\xEB";
+void *ApplyDamagePtr;
 
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
@@ -60,6 +64,7 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 
 	SetControllablePtr = FindAddress(setControllableSignature, 35);
 	EndCooldownPtr = FindAddress(endCooldownSignature, 18);
+	ApplyDamagePtr = FindAddress(applyDamageSignature, 61);
 
 	return true;
 }
@@ -95,6 +100,8 @@ IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 	exUnit.SetHScript(scope);
 	scope = luavm->RegisterInstance(&exAbility, "ExAbility");
 	exAbility.SetHScript(scope);
+	scope = luavm->RegisterInstance(&ex, "Ex");
+	ex.SetHScript(scope);
 
 	RETURN_META_VALUE(MRES_IGNORED, NULL);
 }
@@ -115,6 +122,8 @@ void LuaEx::UnregisterInstance()
 	HSCRIPT scope = exUnit.GetHScript();
 	luavm->RemoveInstance(scope);
 	scope = exAbility.GetHScript();
+	luavm->RemoveInstance(scope);
+	scope = ex.GetHScript();
 	luavm->RemoveInstance(scope);
 }
 
