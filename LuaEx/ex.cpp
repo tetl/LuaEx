@@ -4,6 +4,10 @@ BEGIN_SCRIPTDESC_ROOT(Ex, "More Scripting More Fun")
 	DEFINE_SCRIPTFUNC(SetUnitControllableByPlayer, "Allows Unit to be controlled by PlayerId")
 END_SCRIPTDESC();
 
+Ex::Ex() : m_hScope(INVALID_HSCRIPT)
+{
+}
+
 void Ex::SetUnitControllableByPlayer(HSCRIPT npc, int playerId, bool something)
 {
 	void *npcPtr = luavm->GetInstanceValue(npc);

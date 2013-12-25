@@ -28,13 +28,14 @@
 #include <tier0/platform.h>
 #include <tier1/fmtstr.h>
 #include <sh_memory.h>
+#include <assert.h>
 
 #include "CDetour/detour.h"
 #include "CDetour/defines.h"
 
 static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
-static Ex *ex = new Ex();
+static Ex ex;
 
 IScriptVM *luavm;
 
@@ -44,6 +45,7 @@ void *SetControllablePtr;
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
 SH_DECL_HOOK1(IScriptManager, CreateVM, SH_NOATTRIB, 0, IScriptVM *, ScriptLanguage_t);
+SH_DECL_HOOK1_void(IScriptManager, DestroyVM, SH_NOATTRIB, 0, IScriptVM *);
 
 bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
 {
@@ -59,12 +61,14 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 
 void LuaEx::InitHooks()
 {
-	SH_ADD_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVM), false);
+	SH_ADD_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
+	SH_ADD_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), false);
 }
 
 void LuaEx::ShutdownHooks()
 {
-	SH_REMOVE_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVM), false);
+	SH_REMOVE_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
+	SH_REMOVE_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), false);
 }
 
 bool LuaEx::InitGlobals(char *error, size_t maxlen)
@@ -74,11 +78,35 @@ bool LuaEx::InitGlobals(char *error, size_t maxlen)
 	return true;
 }
 
-IScriptVM* LuaEx::Hook_CreateVM(ScriptLanguage_t language)
+IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 {
-	luavm = SH_CALL(scriptmgr, &IScriptManager::CreateVM)(language);
-	luavm->RegisterInstance(ex, "Ex");
-	RETURN_META_VALUE(MRES_SUPERCEDE, luavm);
+	// We're assuming that there is only one scripting VM and that it's Lua.
+	assert(!luavm);
+	assert(language == SL_LUA);
+
+	luavm = META_RESULT_ORIG_RET(IScriptVM *);
+
+	HSCRIPT scope = luavm->RegisterInstance(&ex, "Ex");
+	ex.SetHScript(scope);
+
+	RETURN_META_VALUE(MRES_IGNORED, NULL);
+}
+
+void LuaEx::Hook_DestroyVM(IScriptVM *pVM)
+{
+	if (luavm)
+	{
+		assert(pVM == luavm);
+
+		UnregisterInstance();
+		luavm = NULL;
+	}
+}
+
+void LuaEx::UnregisterInstance()
+{
+	HSCRIPT scope = ex.GetHScript();
+	luavm->RemoveInstance(scope);
 }
 
 void *LuaEx::FindAddress(const char *sig, size_t len) //Quality sigscanner by Nick Hastings
@@ -133,6 +161,11 @@ void *LuaEx::FindAddress(const char *sig, size_t len) //Quality sigscanner by Ni
 
 bool LuaEx::Unload(char *error, size_t maxlen)
 {
+	if (luavm)
+	{
+		UnregisterInstance();
+	}
+
 	ShutdownHooks();
 	return true;
 }

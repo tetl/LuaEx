@@ -25,10 +25,12 @@ private:
 	void ShutdownHooks();
 
 private:
-	void *FindAddress(const char* sig, size_t len);
+	void UnregisterInstance();
+	static void *FindAddress(const char* sig, size_t len);
 
 private:
-	IScriptVM* Hook_CreateVM(ScriptLanguage_t language);
+	IScriptVM* Hook_CreateVMPost(ScriptLanguage_t language);
+	void Hook_DestroyVM(IScriptVM *pVM);
 };
 
 extern LuaEx g_LuaEx;
