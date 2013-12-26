@@ -54,7 +54,6 @@ public:
 public:
 	void SetControllableByPlayer(HSCRIPT npc, int playerId, bool something);
 };
-static ExUnit s_exUnit;
 
 
 class ExAbility : public ScriptExtension
@@ -65,7 +64,6 @@ public:
 public:
 	void EndCooldown(HSCRIPT ability);
 };
-static ExAbility s_exAbility;
 
 
 class Ex : public ScriptExtension
@@ -76,4 +74,3 @@ public:
 public:
 	void ApplyDamage(HSCRIPT attackingUnit, HSCRIPT damagedUnit, HSCRIPT ability, float damage, int typeField);
 };
-static Ex s_ex;

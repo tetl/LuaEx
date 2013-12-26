@@ -1,6 +1,11 @@
 #include "ex.h"
 #include "utils.h"
 
+static ExUnit s_exUnit;
+static ExAbility s_exAbility;
+static Ex s_ex;
+
+
 BEGIN_EX_SCRIPTDESC_ROOT(ExUnit, "Unit-based script extensions")
 	DEFINE_SCRIPTFUNC(SetControllableByPlayer, "Allows Unit to be controlled by PlayerId")
 END_SCRIPTDESC();

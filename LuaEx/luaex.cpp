@@ -62,13 +62,13 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 void LuaEx::InitHooks()
 {
 	SH_ADD_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
-	SH_ADD_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), false);
+	SH_ADD_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), true);
 }
 
 void LuaEx::ShutdownHooks()
 {
 	SH_REMOVE_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
-	SH_REMOVE_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), false);
+	SH_REMOVE_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), true);
 }
 
 bool LuaEx::InitGlobals(char *error, size_t maxlen)
@@ -103,7 +103,13 @@ void LuaEx::Hook_DestroyVM(IScriptVM *pVM)
 	{
 		assert(pVM == luavm);
 
-		UnregisterInstances();
+		// No need to unregister instances. VM is toast anyway
+
+		for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
+		{
+			ScriptExtension *ex = *i;
+			ex->SetHScript(INVALID_HSCRIPT);
+		}
 		luavm = NULL;
 	}
 }
@@ -114,7 +120,11 @@ void LuaEx::UnregisterInstances()
 	{
 		ScriptExtension *ex = *i;
 		HSCRIPT scope = ex->GetHScript();
+		if (scope == INVALID_HSCRIPT)
+			continue;
+
 		luavm->RemoveInstance(scope);
+		ex->SetHScript(INVALID_HSCRIPT);
 	}
 }
 
