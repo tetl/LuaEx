@@ -25,8 +25,7 @@ private:
 	void ShutdownHooks();
 
 private:
-	void UnregisterInstance();
-	static void *FindAddress(const char* sig, size_t len);
+	void UnregisterInstances();
 
 private:
 	IScriptVM* Hook_CreateVMPost(ScriptLanguage_t language);
@@ -34,6 +33,7 @@ private:
 };
 
 extern LuaEx g_LuaEx;
+extern ISmmAPI *g_SMAPI;
 
 PLUGIN_GLOBALVARS();
 

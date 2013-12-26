@@ -39,6 +39,9 @@
     <ClInclude Include="dotaptrs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="luaex.cpp">
@@ -55,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="CDetour\asm.c">
       <Filter>CDetour</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

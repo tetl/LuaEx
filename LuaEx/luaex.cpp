@@ -35,20 +35,8 @@
 
 static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
-static ExUnit exUnit;
-static ExAbility exAbility;
-static Ex ex;
 
 IScriptVM *luavm;
-
-const char *setControllableSignature = "\x55\x8B\xEC\x51\x56\x89\x86\x64\x0B\x00\x00\xE8\x2A\x2A\x2A\x2A\x80\x7D\x08\x00\x75\x2A\x83\xBE\x64\x0B\x00\x00\xFF\x74\x2A\x8B\x8E\x20\x01";
-void *SetControllablePtr;
-
-const char *endCooldownSignature = "\x55\x8B\xEC\x0F\x57\xC0\x53\x8B\x5D\x08\xF3\x0F\x10\x8B\xE8\x03\x00\x00"; 
-void *EndCooldownPtr;
-
-const char *applyDamageSignature = "\x55\x8B\xEC\x51\x53\x8B\x5D\x08\x56\x85\xFF\x0F\x84\x2A\x2A\x2A\x2A\x83\xBF\x2A\x2A\x2A\x2A\x2A\x0F\x8E\x2A\x2A\x2A\x2A\xB8\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x85\xDB\x74\x2A\x8B\x03\x8B\x50\x08\x8B\xCB\xFF\xD2\x8B\x00\x89\x46\x04\xEB";
-void *ApplyDamagePtr;
 
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
@@ -62,9 +50,11 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 	InitGlobals(error, maxlen);
 	InitHooks();
 
-	SetControllablePtr = FindAddress(setControllableSignature, 35);
-	EndCooldownPtr = FindAddress(endCooldownSignature, 18);
-	ApplyDamagePtr = FindAddress(applyDamageSignature, 61);
+
+	for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
+	{
+		(*i)->Init();
+	}
 
 	return true;
 }
@@ -96,12 +86,13 @@ IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 
 	luavm = META_RESULT_ORIG_RET(IScriptVM *);
 
-	HSCRIPT scope = luavm->RegisterInstance(&exUnit, "ExUnit");
-	exUnit.SetHScript(scope);
-	scope = luavm->RegisterInstance(&exAbility, "ExAbility");
-	exAbility.SetHScript(scope);
-	scope = luavm->RegisterInstance(&ex, "Ex");
-	ex.SetHScript(scope);
+	for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
+	{
+		ScriptExtension *ex = *i;
+		HSCRIPT scope = luavm->RegisterInstance(ex->GetScriptDesc(), ex);
+		luavm->SetValue(NULL, ex->GetInstanceName(), scope);
+		ex->SetHScript(scope);
+	}	
 
 	RETURN_META_VALUE(MRES_IGNORED, NULL);
 }
@@ -112,76 +103,32 @@ void LuaEx::Hook_DestroyVM(IScriptVM *pVM)
 	{
 		assert(pVM == luavm);
 
-		UnregisterInstance();
+		UnregisterInstances();
 		luavm = NULL;
 	}
 }
 
-void LuaEx::UnregisterInstance()
+void LuaEx::UnregisterInstances()
 {
-	HSCRIPT scope = exUnit.GetHScript();
-	luavm->RemoveInstance(scope);
-	scope = exAbility.GetHScript();
-	luavm->RemoveInstance(scope);
-	scope = ex.GetHScript();
-	luavm->RemoveInstance(scope);
-}
-
-void *LuaEx::FindAddress(const char *sig, size_t len) //Quality sigscanner by Nick Hastings
-{
-	bool found;
-	char *ptr, *end;
-
-	LPCVOID startAddr = g_SMAPI->GetServerFactory(false);
-
-	MEMORY_BASIC_INFORMATION mem;
- 
-	if (!startAddr)
-		return NULL;
- 
-	if (!VirtualQuery(startAddr, &mem, sizeof(mem)))
-		return NULL;
- 
-	IMAGE_DOS_HEADER *dos = reinterpret_cast<IMAGE_DOS_HEADER *>(mem.AllocationBase);
-	IMAGE_NT_HEADERS *pe = reinterpret_cast<IMAGE_NT_HEADERS *>((intp)dos + dos->e_lfanew);
- 
-	if (pe->Signature != IMAGE_NT_SIGNATURE)
+	for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
 	{
-		// GetDllMemInfo failedpe points to a bad location
-		return NULL;
+		ScriptExtension *ex = *i;
+		HSCRIPT scope = ex->GetHScript();
+		luavm->RemoveInstance(scope);
 	}
-
-	ptr = reinterpret_cast<char *>(mem.AllocationBase);
-	end = ptr + pe->OptionalHeader.SizeOfImage - len;
-
-	while (ptr < end)
-	{
-		found = true;
-		for (size_t i = 0; i < len; i++)
-		{
-			if (sig[i] != '\x2A' && sig[i] != ptr[i])
-			{
-				found = false;
-				break;
-			}
-		}
-
-		if (found)
-			return ptr;
-
-		ptr++;
-	}
-
-	return NULL;
 }
-
 
 
 bool LuaEx::Unload(char *error, size_t maxlen)
 {
 	if (luavm)
 	{
-		UnregisterInstance();
+		UnregisterInstances();
+	}
+
+	for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
+	{
+		(*i)->Shutdown();
 	}
 
 	ShutdownHooks();

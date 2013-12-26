@@ -88,6 +88,7 @@
     <ClInclude Include="dotaptrs.h" />
     <ClInclude Include="ex.h" />
     <ClInclude Include="luaex.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDetour\asm.c" />
@@ -95,6 +96,7 @@
     <ClCompile Include="CDetour\detour.cpp" />
     <ClCompile Include="ex.cpp" />
     <ClCompile Include="luaex.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
