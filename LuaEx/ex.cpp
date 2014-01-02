@@ -1,10 +1,58 @@
 #include "ex.h"
 #include "utils.h"
+#include "CDetour\detour.h"
+#include "CDetour\defines.h"
+#include <vector>
+#include <map>
+
+struct CUnitOrders
+{
+        int                m_iPlayerID;
+        int                m_iUnknown;
+        CUtlVector<int>        m_SelectedUnitEntIndexes;
+        int                m_iOrderType;
+        int                m_iTargetEntIndex;
+        int                m_iAbilityEntIndex;
+        Vector        m_TargetPos;
+        bool        m_bQueueOrder;
+};
+
+enum HookType
+{
+	Hook_ExecuteOrders
+};
+
+enum DetourResult
+{
+	DET_IGNORE,
+	DET_SUPERCEDE
+};
+
+union DetourReturn
+{
+	int intType;
+	bool boolType;
+	CBaseEntity *entType;
+};
+
+struct DetourHandler
+{
+public:
+	DetourResult result;
+	DetourReturn value;
+};
 
 static ExUnit s_exUnit;
 static ExAbility s_exAbility;
 static Ex s_ex;
+static ExHook s_exHook;
 
+CDetour *CreateLinearProjectileDetour;
+
+std::map<HookType, std::vector<HSCRIPT>> hooks; 
+
+static void *ExecuteOrdersPtr;
+static void *CreateLinearProjectilePointer;
 
 BEGIN_EX_SCRIPTDESC_ROOT(ExUnit, "Unit-based script extensions")
 	DEFINE_SCRIPTFUNC(SetControllableByPlayer, "Allows Unit to be controlled by PlayerId")
@@ -16,6 +64,10 @@ END_SCRIPTDESC();
 
 BEGIN_EX_SCRIPTDESC_ROOT(Ex, "General script extensions")
 	DEFINE_SCRIPTFUNC(ApplyDamage, "Applies TypeField-type Damage to DamagedUnit credited to AttackingUnit. Ability is used scrictly for logging. TODO: Document typeField, experiment with passing NULLs for stuff")
+END_SCRIPTDESC();
+
+BEGIN_EX_SCRIPTDESC_ROOT(ExHook, "Registry and management of high-level game hooks")
+	DEFINE_SCRIPTFUNC(ExecuteOrders, "ExecuteOrders")
 END_SCRIPTDESC();
 
 ScriptExtension::ScriptExtension() : m_hScope(INVALID_HSCRIPT)
@@ -60,6 +112,40 @@ void Ex::ApplyDamage(HSCRIPT attackingUnit, HSCRIPT damagedUnit, HSCRIPT ability
 
 	CALL_REG1_STACK5_VOID(ApplyDamagePtr, edi, damagedPtr, 0, typeField, damage, abilityPtr, attackerPtr);
 }
+
+void ExHook::ExecuteOrders(HSCRIPT callback)
+{
+	//ExecuteOrdersDetour->EnableDetour();
+	std::vector<HSCRIPT> *hookList = &hooks[Hook_ExecuteOrders];
+	hookList->push_back(callback);
+}
+
+DETOUR_DECL_NAKED(CreateLinearProjectileHook, bool )
+{
+	printf("Detour hit\n\n\n");
+
+	CBaseEntity *unit;
+
+    START_NAKED_ARG1(eax, unit)
+	/*BEGIN_HOOK_CALLS(Hook_ExecuteOrders)
+		luavm->Call(*it, INVALID_HSCRIPT, false, NULL, 0); //*it comes from boilerplate in the begin macro, does this suck?
+	END_HOOK_CALLS*/
+	END_NAKED_RETURN(al, 0)
+}
+
+void SetupDetours()
+{
+	const char *executeOrdersSignature = "\x55\x8B\xEC\x83\xE4\xC0\x81\xEC\xB4\x01\x00\x00\xA1\x2A\x2A\x2A\x2A\x53\x56\x66\x0F\x57\xC0\x66\x0F\x13\x84\x24\xD4\x00\x00";
+	ExecuteOrdersPtr = FindAddress(ADDR_SERVER, executeOrdersSignature, 31);
+
+	const char *createLinearProjectileSignature = "\x55\x8B\xEC\x51\x56\x8B\xF0\x8B\x86\x2A\x2A\x2A\x2A\xC1\x2A\x2A\x24\x01\x74\x2A\xB0\x01\x5E\x8B\xE5\x5D\xC3"; //actually IsDeniable
+	CreateLinearProjectilePointer = FindAddress(ADDR_SERVER, createLinearProjectileSignature, 27);
+
+	CreateLinearProjectileDetour = &DETOUR_CREATE_STATIC_PTR(CreateLinearProjectileHook, CreateLinearProjectilePointer);
+	CreateLinearProjectileDetour->EnableDetour();
+}
+
+
 
 /*void Ex::IsDeniable(HSCRIPT npc)
 {

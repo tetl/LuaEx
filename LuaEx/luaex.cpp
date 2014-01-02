@@ -25,6 +25,7 @@
 
 #include "LuaEx.h"
 #include "ex.h"
+#include "utils.h"
 #include <tier0/platform.h>
 #include <tier1/fmtstr.h>
 #include <sh_memory.h>
@@ -37,6 +38,8 @@ static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
 
 IScriptVM *luavm;
+
+
 
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
@@ -56,6 +59,7 @@ bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool la
 		(*i)->Init();
 	}
 
+
 	return true;
 }
 
@@ -63,6 +67,7 @@ void LuaEx::InitHooks()
 {
 	SH_ADD_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
 	SH_ADD_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), true);
+	SetupDetours();
 }
 
 void LuaEx::ShutdownHooks()
@@ -85,7 +90,7 @@ IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 	assert(language == SL_LUA);
 
 	luavm = META_RESULT_ORIG_RET(IScriptVM *);
-
+	
 	for (auto i = ScriptExtensions().begin(); i != ScriptExtensions().end(); ++i)
 	{
 		ScriptExtension *ex = *i;
@@ -94,6 +99,7 @@ IScriptVM* LuaEx::Hook_CreateVMPost(ScriptLanguage_t language)
 		ex->SetHScript(scope);
 	}	
 
+	
 	RETURN_META_VALUE(MRES_IGNORED, NULL);
 }
 

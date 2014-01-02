@@ -74,3 +74,16 @@ public:
 public:
 	void ApplyDamage(HSCRIPT attackingUnit, HSCRIPT damagedUnit, HSCRIPT ability, float damage, int typeField);
 };
+
+class ExHook: public ScriptExtension
+{
+	DECLARE_EX_SCRIPTDESC();
+public:
+	const char *GetInstanceName() const override { return "ExHook"; }
+public:
+	void SetupHooks();
+	void ExecuteOrders(HSCRIPT callback);
+	void HookTest();
+};
+
+extern void SetupDetours();
