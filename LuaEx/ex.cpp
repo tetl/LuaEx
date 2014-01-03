@@ -1,5 +1,6 @@
 #include "ex.h"
 #include "utils.h"
+#include "dotaptrs.h"
 #include "CDetour\detour.h"
 #include "CDetour\defines.h"
 #include <vector>

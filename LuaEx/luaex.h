@@ -5,6 +5,8 @@
 #ifndef _INCLUDE_METAMOD_SOURCE_STUB_PLUGIN_H_
 #define _INCLUDE_METAMOD_SOURCE_STUB_PLUGIN_H_
 
+class IServerTools;
+
 class LuaEx : public ISmmPlugin
 {
 public: //ISmmPlugin
@@ -33,6 +35,11 @@ private:
 };
 
 extern LuaEx g_LuaEx;
+extern IVEngineServer *engine;
+extern IServerGameDLL *gamedll;
+extern IServerGameEnts *gameents;
+extern IServerTools *servertools;
+extern CGlobalVars *gpGlobals;
 extern ISmmAPI *g_SMAPI;
 
 PLUGIN_GLOBALVARS();

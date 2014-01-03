@@ -28,6 +28,7 @@
 #include "utils.h"
 #include <tier0/platform.h>
 #include <tier1/fmtstr.h>
+#include <toolframework\itoolentity.h>
 #include <sh_memory.h>
 #include <assert.h>
 
@@ -38,6 +39,11 @@ static LuaEx g_LuaEx;
 static IScriptManager *scriptmgr = NULL;
 
 IScriptVM *luavm;
+IVEngineServer *engine;
+IServerGameDLL *gamedll;
+IServerGameEnts *gameents;
+IServerTools *servertools;
+CGlobalVars *gpGlobals;
 
 
 
@@ -80,6 +86,11 @@ bool LuaEx::InitGlobals(char *error, size_t maxlen)
 {	
 	ISmmAPI *ismm = g_SMAPI;
 	GET_V_IFACE_CURRENT(GetEngineFactory, scriptmgr, IScriptManager, VSCRIPT_INTERFACE_VERSION);
+	GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+	GET_V_IFACE_CURRENT(GetServerFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
+	GET_V_IFACE_CURRENT(GetServerFactory, gameents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
+	GET_V_IFACE_CURRENT(GetServerFactory, servertools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
+	gpGlobals = ismm->GetCGlobals();
 	return true;
 }
 

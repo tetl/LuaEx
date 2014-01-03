@@ -1,3 +1,4 @@
+#include "luaex.h"
 
 enum AddressType
 {
@@ -7,6 +8,19 @@ enum AddressType
 
 void *FindAddress(AddressType type, const char *sig, size_t len);
 
+inline int IndexOfEdict(const edict_t *pEdict)
+{
+	return (int) (pEdict - gpGlobals->pEdicts);
+}
+
+inline edict_t *PEntityOfEntIndex(int iEntIndex)
+{
+	if (iEntIndex >= 0 && iEntIndex < gpGlobals->maxEntities)
+	{
+		return (edict_t *)(gpGlobals->pEdicts + iEntIndex);
+	}
+	return NULL;
+}
 
 
 #define BEGIN_HOOK_CALLS(hooktype) \

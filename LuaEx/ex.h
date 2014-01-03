@@ -1,7 +1,7 @@
-#include <ISmmPlugin.h>
 #include <vscript/ivscript.h>
-#include "dotaptrs.h"
 #include <list>
+
+#pragma once
 
 // These were taken from vscript_shared.h (s/ENT/EX/). They impl the nice virtual GetScriptDesc for us
 #define DECLARE_EX_SCRIPTDESC()													ALLOW_SCRIPT_ACCESS(); virtual ScriptClassDesc_t *GetScriptDesc()
