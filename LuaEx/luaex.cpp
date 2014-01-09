@@ -45,12 +45,13 @@ IServerGameEnts *gameents;
 IServerTools *servertools;
 CGlobalVars *gpGlobals;
 
-
+CDetour *CreateLinearProjectileDetour;
 
 PLUGIN_EXPOSE(LuaEx, g_LuaEx);
 
 SH_DECL_HOOK1(IScriptManager, CreateVM, SH_NOATTRIB, 0, IScriptVM *, ScriptLanguage_t);
 SH_DECL_HOOK1_void(IScriptManager, DestroyVM, SH_NOATTRIB, 0, IScriptVM *);
+
 
 bool LuaEx::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
 {
@@ -73,6 +74,7 @@ void LuaEx::InitHooks()
 {
 	SH_ADD_HOOK(IScriptManager, CreateVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_CreateVMPost), true);
 	SH_ADD_HOOK(IScriptManager, DestroyVM, scriptmgr, SH_MEMBER(this, &LuaEx::Hook_DestroyVM), true);
+
 	SetupDetours();
 }
 
@@ -202,25 +204,4 @@ const char * LuaEx::GetLogTag()
 	return "LX";
 }
 
-/*DETOUR_DECL_NAKED(IsDeniable, bool){
-    CBaseEntity *unit;
 
-    START_NAKED_ARG1(eax, unit)
-
-	DetourHandler handler;
-	handler = ex->IsDeniableCalled();
-
-	bool retn;
-
-	switch(handler.result)
-	{
-		case DET_IGNORE:
-			NONSTANDARD_CALL_REG1_RET(IsDeniable_Actual, al, eax, unit)
-			break;
-		case DET_SUPERCEDE:
-			retn = handler.value.boolType;
-			break;
-	}
-
-	 END_NAKED_RETURN(al, retn);
-}*/

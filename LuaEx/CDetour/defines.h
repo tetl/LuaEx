@@ -20,9 +20,9 @@ __declspec(naked) ret name()
 ret (*name##_Actual)(void) = NULL; \
 ret name(void)
 
-#define DETOUR_DECL_STATIC1(name, ret, p1type, p1name) \
-ret (*name##_Actual)(p1type) = NULL; \
-ret name(p1type p1name)
+#define DETOUR_DECL_STATIC1_STDCALL_NAKED(name, ret, p1type, p1name) \
+ret (__stdcall*name##_Actual)(p1type) = NULL; \
+__declspec(naked) ret name(p1type p1name)
 
 #define DETOUR_DECL_NAKED(name, ret) \
 ret (__stdcall*name##_Actual)() = NULL; \

@@ -53,6 +53,7 @@ public:
 	const char *GetInstanceName() const override { return "ExUnit"; }
 public:
 	void SetControllableByPlayer(HSCRIPT npc, int playerId, bool something);
+	void SetAbilityByIndex(HSCRIPT npc, HSCRIPT ability, int index);
 };
 
 
@@ -63,6 +64,8 @@ public:
 	const char *GetInstanceName() const override { return "ExAbility"; }
 public:
 	void EndCooldown(HSCRIPT ability);
+	
+	void SetProjectileDirection(int handle, HSCRIPT ability);
 };
 
 
