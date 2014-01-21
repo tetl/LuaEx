@@ -24,6 +24,10 @@ ret name(void)
 ret (__stdcall*name##_Actual)(p1type) = NULL; \
 __declspec(naked) ret name(p1type p1name)
 
+#define DETOUR_DECL_STATIC2_STDCALL_NAKED(name, ret, p1type, p1name, p2type, p2name) \
+ret (__stdcall*name##_Actual)(p1type, p2type) = NULL; \
+__declspec(naked) ret name(p1type p1name, p2type p2name) 
+
 #define DETOUR_DECL_NAKED(name, ret) \
 ret (__stdcall*name##_Actual)() = NULL; \
 __declspec(naked) ret name()

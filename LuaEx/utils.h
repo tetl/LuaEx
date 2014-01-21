@@ -24,7 +24,8 @@ inline edict_t *PEntityOfEntIndex(int iEntIndex)
 
 
 #define BEGIN_HOOK_CALLS(hooktype) \
-	std::vector<HSCRIPT> *hookList = &hooks[hooktype]; \
+	std::vector<HSCRIPT> *hookList;  \
+	hookList = &hooks[hooktype]; \
 	for(std::vector<HSCRIPT>::iterator it = hookList->begin(); it != hookList->end(); it++) \
 	{ 
 
@@ -78,10 +79,20 @@ inline edict_t *PEntityOfEntIndex(int iEntIndex)
 	__asm mov reg1, arg1 \
 	__asm push stack1 \
 	__asm call func \
-	__asm mov retn, retreg
+	__asm mov res, retreg
 
 #define CALL_REG1_STACK2_VOID(func, reg1, arg1, stack1, stack2) \
 	__asm mov reg1, arg1 \
+	__asm push stack1 \
+	__asm push stack2 \
+	__asm call func
+
+#define CALL_REG5_STACK2_VOID(func, reg1, arg1, reg2, arg2, reg3, arg3, reg4, arg4, reg5, arg5, stack1, stack2) \
+	__asm mov reg1, arg1 \
+	__asm mov reg2, arg2 \
+	__asm mov reg3, arg3 \
+	__asm mov reg4, arg4 \
+	__asm mov reg5, arg5 \
 	__asm push stack1 \
 	__asm push stack2 \
 	__asm call func
@@ -116,6 +127,17 @@ inline edict_t *PEntityOfEntIndex(int iEntIndex)
 	__asm	pushad \
 	__asm	pushfd 
     
+	#define START_NAKED_ARG5(reg1, var1, reg2, var2, reg3, var3, reg4, var4, reg5, var5) \
+	__asm	push        ebp \
+    __asm   mov         ebp, esp \
+	__asm   sub         esp, 64 \
+    __asm   mov         var1, reg1 \
+	__asm   mov         var2, reg2 \
+	__asm   mov         var3, reg3 \
+	__asm   mov         var4, reg4 \
+	__asm   mov         var5, reg5 \
+	__asm	pushad \
+	__asm	pushfd 
 
 #define END_NAKED() \
 	__asm	popfd \

@@ -57,6 +57,7 @@ static void *IsDeniablePtr;
 static void *CreateLinearProjectilePtr;
 static void *ProjectileManagerPtr;
 static void *ProjectileDirectionPtr;
+static void *FogTeamsPatchPtr;
 
 std::map<HookType, std::vector<HSCRIPT>> hooks; 
 
@@ -65,6 +66,8 @@ static void *CreateLinearProjectilePointer;
 static void *TrackingPtr;
 static void *TrackingSpeedPtr;
 static void *SetAbilityByIndexPtr;
+
+static CDetour *ExecuteOrdersDetour;
 
 BEGIN_EX_SCRIPTDESC_ROOT(ExUnit, "Unit-based script extensions")
 	DEFINE_SCRIPTFUNC(SetControllableByPlayer, "Allows Unit to be controlled by PlayerId")
@@ -204,7 +207,7 @@ void Ex::ApplyDamage(HSCRIPT attackingUnit, HSCRIPT damagedUnit, HSCRIPT ability
 
 void ExHook::ExecuteOrders(HSCRIPT callback)
 {
-	//ExecuteOrdersDetour->EnableDetour();
+	ExecuteOrdersDetour->EnableDetour();
 	std::vector<HSCRIPT> *hookList = &hooks[Hook_ExecuteOrders];
 	hookList->push_back(callback);
 }
@@ -214,10 +217,89 @@ DETOUR_DECL_STATIC1_STDCALL_NAKED(CreateLinearProjectileHook, int, void*, kv)
 	void *dude;
 	START_NAKED_ARG1(edi, dude)
 	printf("OHSHIT");
-	int retn;
+	int res;
 	CALL_REG1_STACK1_RET(CreateLinearProjectileHook_Actual, eax, edi, ProjectileManagerPtr, kv)
 
-	END_NAKED_RETURN(eax, retn)
+	END_NAKED_RETURN(eax, res)
+}
+
+void ExecuteOrdersCalled()
+{
+
+}
+
+CUnitOrders* CallExecuteOrderHooks(CUnitOrders *orders)
+{
+	BEGIN_HOOK_CALLS(Hook_ExecuteOrders)
+		ScriptVariant_t table;
+		luavm->CreateTable(table);
+		luavm->SetValue(table, "OrderType", orders->m_iOrderType);
+		printf("Vector: %d\n", orders->m_SelectedUnitEntIndexes.Count());
+		if (orders->m_SelectedUnitEntIndexes.Count() > 0)
+			luavm->SetValue(table, "UnitIndex", orders->m_SelectedUnitEntIndexes.Head());
+		luavm->SetValue(table, "AbilityIndex", orders->m_iAbilityEntIndex);
+		luavm->SetValue(table, "TargetIndex", orders->m_iTargetEntIndex);
+		if (orders->m_iPlayerID > 0)
+			luavm->SetValue(table, "PlayerID", orders->m_iPlayerID);
+		luavm->SetValue(table, "Queue", orders->m_bQueueOrder);
+		luavm->SetValue(table, "Position", orders->m_TargetPos);
+		ScriptVariant_t scriptReturn;
+		luavm->Call(*it, NULL, false, &scriptReturn, table);
+		
+		if (scriptReturn.m_bool == true)
+		{
+			return orders;
+		} else if (scriptReturn.m_hScript != NULL)
+		{
+			CUnitOrders* action = new CUnitOrders();
+			ScriptVariant_t tableData;
+			luavm->GetValue(scriptReturn, "Queue", &tableData);
+			action->m_bQueueOrder = tableData.m_bool;
+			luavm->GetValue(scriptReturn, "AbilityIndex", &tableData);
+			action->m_iAbilityEntIndex = tableData.m_int;
+			luavm->GetValue(scriptReturn, "OrderType", &tableData);
+			action->m_iOrderType = tableData.m_int;
+			luavm->GetValue(scriptReturn, "PlayerID", &tableData);
+			action->m_iPlayerID = tableData.m_int;
+			luavm->GetValue(scriptReturn, "TargetIndex", &tableData);
+			action->m_iTargetEntIndex = tableData.m_int;
+			luavm->GetValue(scriptReturn, "UnitIndex", &tableData);
+			action->m_SelectedUnitEntIndexes.AddToHead(tableData.m_int);
+			luavm->GetValue(scriptReturn, "Position", &tableData);
+			action->m_TargetPos = *tableData.m_pVector;
+			return action;
+		} else
+		{
+			return NULL;
+		}
+	END_HOOK_CALLS
+		
+}
+
+DETOUR_DECL_NAKED(ExecuteOrdersHook, void)
+{
+	bool b3;
+	int playerid;
+	CBaseEntity *a2;
+	int a3;
+	CUnitOrders *a4;
+	START_NAKED_ARG5(dl, b3, ecx, playerid, ebx, a2, esi, a3, edi, a4)
+	
+	
+		
+
+	printf("PTR: %d\n", a4);
+	CUnitOrders *action;
+	if (a4 != NULL) 
+	action = CallExecuteOrderHooks(a4);
+
+	if (action != NULL) 
+	{
+		CALL_REG5_STACK2_VOID(ExecuteOrdersHook_Actual, dl, b3, ecx, playerid, ebx, a2, edi, a3, esi, action, 0, 0);
+		__asm add esp, 8
+	}
+
+	END_NAKED()
 }
 
 static CDetour *CreateLinearProjectileDetour;
@@ -242,6 +324,20 @@ void SetupDetours()
 	const char *trackingSpeedSignature = "\x57\x8B\xBE\x18\x04\x00\x00\x56\xE8\x2A\x2A\x2A\x2A\x83\xF8\xFF\x75\x2A\x68\x2A\x2A\x2A\x2A\xFF\x15\x2A\x2A\x2A\x2A\x83\xC4\x04\xEB\x2A\x8B\x15\x2A\x2A\x2A\x2A\x8D\x0C\xC5\x00\x00\x00\x00";
 	TrackingSpeedPtr = FindAddress(ADDR_SERVER, trackingSpeedSignature, 47);
 
+	const char *executeOrdersSignature = "\x55\x8B\xEC\x83\xE4\xC0\x81\xEC\xB4\x01\x00\x00\xA1\x2A\x2A\x2A\x2A\x0F\x57\xC0\x53\x56\x8B\xF1\x66\x0F\x13\x84\x24\xCC\x00\x00\x2A\x83\x78\x08\x00\x8A\xDA\x57\x89\x74\x24\x3C";
+	ExecuteOrdersPtr = FindAddress(ADDR_SERVER, executeOrdersSignature, 44);
+	ExecuteOrdersDetour = new DETOUR_CREATE_STATIC_PTR(ExecuteOrdersHook, ExecuteOrdersPtr);
+
+//	const char *fogTeamsPatch = "\xC7\x46\x0C\x02\x00\x00\x00\x8B\x50\x58\x85\xD2\x74\x2a\x8B\x02\x8B\xCA\xD1\xE8\xA8\x01\xB8\x00\x00\x00\x00\x0F\x45\xC8\xEB\x2A\x33\xC9";
+//	FogTeamsPatchPtr = FindAddress(ADDR_SERVER, fogTeamsPatch, 34);
+
+	//void *patchByte = (void*)((intp)FogTeamsPatchPtr + 3);
+	//SourceHook::SetMemAccess(patchByte, sizeof(uint8), SH_MEM_READ|SH_MEM_WRITE|SH_MEM_EXEC);
+
+
+   	//*reinterpret_cast<uint8 *>(patchByte) = 0x0F;
+
+    
 	//CreateLinearProjectileDetour = &DETOUR_CREATE_STATIC_PTR(CreateLinearProjectileHook, CreateLinearProjectilePointer);
 	//CreateLinearProjectileDetour->EnableDetour();
 }
@@ -283,4 +379,5 @@ DetourHandler Ex::IsDeniableCalled()
 		
 	return handler;
 }*/
+
 
